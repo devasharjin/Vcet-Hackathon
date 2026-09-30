@@ -29,8 +29,8 @@ export const MainLayout: React.FC = () => {
           currentRepo={currentRepo}
           onOpenRepoClick={() => setIsRepoModalOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto bg-[#0d1117] relative">
-          <Outlet />
+        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#0d1117] relative">
+          <Outlet context={{ currentRepo, onOpenRepoClick: () => setIsRepoModalOpen(true) }} />
         </main>
       </div>
 

@@ -8,5 +8,7 @@ router.get('/info', (req, res, next) => repositoryController.getRepositoryInfo(r
 router.get('/branches', (req, res, next) => repositoryController.getBranches(req, res, next));
 router.get('/status', (req, res, next) => repositoryController.getStatus(req, res, next));
 router.get('/recent', (req, res, next) => repositoryController.getRecentRepositories(req, res, next));
+router.get('/graph', (req, res, next) => repositoryController.getGitGraph(req, res, next));
+router.post('/demo-merge', (req, res, next) => repositoryController.createSampleMerge(req, res, next));
 
 export default router;

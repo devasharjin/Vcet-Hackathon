@@ -1,0 +1,7 @@
+node_modules/
+dist/
+demo-repo/
+scratch/
+.env
+.DS_Store
+*.log

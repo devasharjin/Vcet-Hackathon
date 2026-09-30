@@ -1,5 +1,6 @@
 import React from 'react';
-import { GitBranch, FolderGit2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { GitBranch, FolderGit2, CheckCircle2, AlertCircle, GitGraph } from 'lucide-react';
 import { RepositoryInfo } from '../../types/repository.js';
 
 export interface HeaderProps {
@@ -45,9 +46,23 @@ export const Header: React.FC<HeaderProps> = ({ currentRepo, onOpenRepoClick }) 
       </div>
 
       <div className="flex items-center gap-3">
+        <NavLink
+          to="/graph"
+          className={({ isActive }) =>
+            `text-xs px-3 py-1.5 rounded-lg border font-mono transition-colors flex items-center gap-1.5 ${
+              isActive
+                ? 'bg-[#a371f7]/20 border-[#a371f7] text-[#d2a8ff]'
+                : 'bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border-[#30363d]'
+            }`
+          }
+        >
+          <GitGraph className="w-3.5 h-3.5 text-[#a371f7]" />
+          <span>Git Graph</span>
+        </NavLink>
+
         <button
           onClick={onOpenRepoClick}
-          className="text-xs px-3 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition-colors flex items-center gap-1.5"
+          className="text-xs px-3 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition-colors flex items-center gap-1.5 font-mono"
         >
           <FolderGit2 className="w-3.5 h-3.5 text-[#58a6ff]" />
           Change Repository

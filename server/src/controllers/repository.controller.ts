@@ -115,6 +115,43 @@ export class RepositoryController {
       next(err);
     }
   }
+
+  async getGitGraph(req: Request, res: Response, next: NextFunction) {
+    try {
+      const rawPath = (req.query.path as string) || (req.body?.path as string);
+      if (!rawPath) {
+        throw new AppError('Repository path is required', 400);
+      }
+      const normalized = normalizeRepoPath(rawPath);
+      const maxCommits = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
+      const graphData = await gitService.getGitGraph(normalized, maxCommits);
+
+      res.status(200).json({
+        success: true,
+        data: graphData,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async createSampleMerge(req: Request, res: Response, next: NextFunction) {
+    try {
+      const rawPath = (req.body?.path as string) || (req.query.path as string);
+      if (!rawPath) {
+        throw new AppError('Repository path is required', 400);
+      }
+      const normalized = normalizeRepoPath(rawPath);
+      const result = await gitService.createSampleMerge(normalized);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export const repositoryController = new RepositoryController();

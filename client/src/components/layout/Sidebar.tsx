@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   GitBranch,
   GitMerge,
+  GitGraph,
   ShieldCheck,
   History,
   Sparkles,
@@ -13,6 +14,7 @@ import {
 export const Sidebar: React.FC = () => {
   const navItems = [
     { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { to: '/graph', label: 'Git Graph', icon: <GitGraph className="w-4 h-4 text-[#a371f7]" /> },
     { to: '/repository', label: 'Repository', icon: <GitBranch className="w-4 h-4" /> },
     { to: '/conflicts', label: 'Conflict Resolver', icon: <GitMerge className="w-4 h-4" /> },
     { to: '/verification', label: 'Verification', icon: <ShieldCheck className="w-4 h-4" /> },

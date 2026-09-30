@@ -16,10 +16,61 @@ export class GitCommitManager {
 
   /**
    * Commit resolved files with message "resolved merge conflict"
+   * Supports dual-parent merge commits if merging from another branch
    */
-  async commit(repoPath: string, message = 'resolved merge conflict'): Promise<string> {
+  async commit(
+    repoPath: string,
+    message = 'resolved merge conflict',
+    options?: { mergeBranch?: string; mergeParentHash?: string }
+  ): Promise<string> {
     const normalized = normalizeRepoPath(repoPath);
     logger.info(`Creating commit in ${normalized}: "${message}"`);
+
+    // Check if git is currently in a merge state (.git/MERGE_HEAD exists)
+    let mergeHead: string | null = null;
+    try {
+      const { stdout } = await runGitCommand(['rev-parse', '-q', '--verify', 'MERGE_HEAD'], { cwd: normalized });
+      if (stdout.trim()) mergeHead = stdout.trim();
+    } catch {}
+
+    // Or if mergeBranch is supplied, get its hash
+    if (!mergeHead && options?.mergeParentHash) {
+      mergeHead = options.mergeParentHash.trim();
+    } else if (!mergeHead && options?.mergeBranch) {
+      try {
+        const { stdout } = await runGitCommand(['rev-parse', options.mergeBranch], { cwd: normalized });
+        if (stdout.trim()) mergeHead = stdout.trim();
+      } catch {}
+    }
+
+    if (mergeHead) {
+      try {
+        // Create dual-parent commit using write-tree + commit-tree
+        const { stdout: headHash } = await runGitCommand(['rev-parse', 'HEAD'], { cwd: normalized });
+        const { stdout: treeHash } = await runGitCommand(['write-tree'], { cwd: normalized });
+        const { stdout: commitHash } = await runGitCommand(
+          ['commit-tree', treeHash.trim(), '-p', headHash.trim(), '-p', mergeHead, '-m', message],
+          { cwd: normalized }
+        );
+        const newCommit = commitHash.trim();
+        // Update current branch ref to this commit
+        await runGitCommand(['update-ref', 'HEAD', newCommit], { cwd: normalized });
+        // Clean up MERGE_HEAD / MERGE_MSG if present
+        try {
+          const fs = await import('fs');
+          const path = await import('path');
+          const mergeHeadFile = path.join(normalized, '.git', 'MERGE_HEAD');
+          const mergeMsgFile = path.join(normalized, '.git', 'MERGE_MSG');
+          if (fs.existsSync(mergeHeadFile)) fs.unlinkSync(mergeHeadFile);
+          if (fs.existsSync(mergeMsgFile)) fs.unlinkSync(mergeMsgFile);
+        } catch {}
+
+        logger.info(`Dual-parent merge commit created successfully: ${newCommit}`);
+        return newCommit;
+      } catch (err: any) {
+        logger.warn(`Failed dual-parent commit-tree, falling back to standard commit: ${err.message}`);
+      }
+    }
 
     // Check if there are staged changes
     const { stdout: stagedChanges } = await runGitCommand(['diff', '--cached', '--name-only'], {

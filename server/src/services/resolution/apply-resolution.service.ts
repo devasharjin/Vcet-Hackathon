@@ -91,7 +91,11 @@ export class ApplyResolutionService {
     // 4. Verification passed: Stage and commit
     logger.info(`Verification passed! Staging resolved files and committing...`);
     await gitService.stageFiles(repoPath, filesApplied);
-    const commitHash = await gitService.commit(repoPath, 'resolved merge conflict');
+    const commitHash = await gitService.commit(
+      repoPath,
+      `Merge branch '${session.sourceBranch}' into ${session.targetBranch} (resolved merge conflicts)`,
+      { mergeBranch: session.sourceBranch }
+    );
 
     await DataStore.updateSession(sessionId, {
       status: 'COMMITTED',

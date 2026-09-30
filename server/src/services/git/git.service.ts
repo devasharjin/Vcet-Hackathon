@@ -101,8 +101,20 @@ export class GitService {
     return this.commitManager.stageFiles(repoPath, files);
   }
 
-  async commit(repoPath: string, message = 'resolved merge conflict'): Promise<string> {
-    return this.commitManager.commit(repoPath, message);
+  async commit(
+    repoPath: string,
+    message = 'resolved merge conflict',
+    options?: { mergeBranch?: string; mergeParentHash?: string }
+  ): Promise<string> {
+    return this.commitManager.commit(repoPath, message, options);
+  }
+
+  async getGitGraph(repoPath: string, maxCommits = 100) {
+    return this.repoManager.getGitGraph(repoPath, { limit: maxCommits });
+  }
+
+  async createSampleMerge(repoPath: string) {
+    return this.repoManager.createSampleMerge(repoPath);
   }
 
   async getRemotes(repoPath: string) {

@@ -1,5 +1,5 @@
 import { apiClient } from './api.js';
-import { RepositoryInfo, GitStatusSummary } from '../types/repository.js';
+import { RepositoryInfo, GitStatusSummary, GitGraphData } from '../types/repository.js';
 import { BranchInfo } from '../types/branch.js';
 
 export interface OpenRepoResponse {
@@ -36,6 +36,16 @@ export const repositoryApi = {
 
   async createSampleRepo(): Promise<{ path: string; sourceBranch: string; targetBranch: string; message: string }> {
     const res: any = await apiClient.post('/demo/create-sample-repo');
+    return res.data;
+  },
+
+  async getGitGraph(path: string, limit = 100): Promise<GitGraphData> {
+    const res: any = await apiClient.get('/repositories/graph', { params: { path, limit } });
+    return res.data;
+  },
+
+  async createSampleMerge(path: string): Promise<{ success: boolean; mergeHash: string; message: string }> {
+    const res: any = await apiClient.post('/repositories/demo-merge', { path });
     return res.data;
   },
 };
