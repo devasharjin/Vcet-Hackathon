@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-ide: #0d1117;
+    --surface-ide: #161b22;
+    --border-ide: #30363d;
+    --text-ide: #c9d1d9;
+  }
+
+  body {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  }
+}
+
+/* Custom Sleek Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d1117;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #484f58;
+}
+
+/* Monaco Editor AI Change Decorations */
+.ai-change-line-highlight {
+  background: linear-gradient(90deg, rgba(163, 113, 247, 0.28) 0%, rgba(137, 87, 229, 0.10) 100%) !important;
+  border-left: 4px solid #a371f7 !important;
+}
+
+.ai-change-active-highlight {
+  background: linear-gradient(90deg, rgba(88, 166, 255, 0.32) 0%, rgba(31, 111, 235, 0.12) 100%) !important;
+  border-left: 4px solid #58a6ff !important;
+  box-shadow: inset 0 0 12px rgba(88, 166, 255, 0.2);
+}
+
+.ai-change-glyph {
+  background: #a371f7;
+  border-radius: 50%;
+  width: 8px !important;
+  height: 8px !important;
+  margin-left: 3px;
+  margin-top: 5px;
+  box-shadow: 0 0 8px rgba(163, 113, 247, 0.9);
+}
