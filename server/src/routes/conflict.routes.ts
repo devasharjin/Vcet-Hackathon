@@ -10,6 +10,8 @@ router.get('/:sessionId', (req, res, next) => conflictController.getSession(req,
 router.get('/:sessionId/conflicts', (req, res, next) => conflictController.getSessionConflicts(req, res, next));
 router.post('/:sessionId/apply', (req, res, next) => conflictController.applyResolution(req, res, next));
 router.post('/:sessionId/rollback', (req, res, next) => conflictController.rollbackSession(req, res, next));
+router.get('/:sessionId/remotes', (req, res, next) => conflictController.getSessionRemotes(req, res, next));
+router.post('/:sessionId/remotes', (req, res, next) => conflictController.setSessionRemote(req, res, next));
 router.post('/:sessionId/push', (req, res, next) => conflictController.pushCommit(req, res, next));
 
 export default router;

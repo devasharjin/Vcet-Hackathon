@@ -13,6 +13,7 @@ import {
 import { useRepositoryContext } from '../context/RepositoryContext.js';
 import { useConflicts } from '../hooks/useConflicts.js';
 import { VerificationPanel } from '../components/verification/VerificationPanel.js';
+import { PushToGithubCard } from '../components/verification/PushToGithubCard.js';
 import { Button } from '../components/common/Button.js';
 import { Toast } from '../components/common/Toast.js';
 import { EmptyState } from '../components/common/EmptyState.js';
@@ -39,6 +40,18 @@ export const VerificationPage: React.FC = () => {
       runVerification();
     }
   }, [activeSessionId]);
+
+  useEffect(() => {
+    if (session && (session.status === 'COMMITTED' || session.status === 'PUSHED') && !applyResult) {
+      setApplyResult({
+        success: true,
+        message: 'Resolution committed to repository.',
+        verificationPassed: true,
+        commitHash: session.commitHash || '',
+        filesApplied: conflicts.map((c) => c.filePath),
+      });
+    }
+  }, [session, applyResult, conflicts]);
 
   const runVerification = async () => {
     if (!activeSessionId) return;
@@ -143,13 +156,24 @@ export const VerificationPage: React.FC = () => {
   // Section 23: Final Success Screen!
   if (applyResult && applyResult.success) {
     return (
-      <div className="p-8 max-w-3xl mx-auto space-y-6 animate-in zoom-in-95 duration-300">
+      <div className="p-8 max-w-4xl mx-auto space-y-6 animate-in zoom-in-95 duration-300">
+        {toast && (
+          <div className="fixed top-20 right-6 z-50">
+            <Toast
+              type={toast.type}
+              title={toast.title}
+              message={toast.message}
+              onClose={() => setToast(null)}
+            />
+          </div>
+        )}
+
         <div className="text-center space-y-3 pb-4">
           <div className="w-16 h-16 rounded-full bg-[#238636]/20 border-2 border-[#2ea043] flex items-center justify-center mx-auto shadow-lg shadow-[#2ea043]/20">
             <CheckCircle2 className="w-9 h-9 text-[#3fb950]" />
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Merge Resolved Successfully
+            Merge Resolved & Committed
           </h1>
           <p className="text-sm text-[#8b949e]">
             Approved resolutions were applied, verified, and safely committed back to your local Git repository.
@@ -204,22 +228,37 @@ export const VerificationPage: React.FC = () => {
               <span>{applyResult.filesApplied.length} file(s) staged and committed</span>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/history')}
-            >
-              View in Merge History
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => navigate('/repository')}
-              icon={<FolderGit2 className="w-4 h-4" />}
-            >
-              Back to Repository
-            </Button>
-          </div>
+        {/* Step 6: Push to Remote Repository (GitHub) to complete the full workflow */}
+        <PushToGithubCard
+          sessionId={activeSessionId}
+          commitHash={applyResult.commitHash}
+          defaultBranch={session?.targetBranch || currentRepo?.currentBranch || 'main'}
+          sourceBranch={session?.sourceBranch}
+          onPushedSuccess={(result) => {
+            setToast({
+              type: 'success',
+              title: 'Pushed to GitHub!',
+              message: `Successfully pushed commit to ${result.remote}/${result.branch}`,
+            });
+          }}
+        />
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/history')}
+          >
+            View in Merge History
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/repository')}
+            icon={<FolderGit2 className="w-4 h-4" />}
+          >
+            Back to Repository
+          </Button>
         </div>
       </div>
     );

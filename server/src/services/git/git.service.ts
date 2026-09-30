@@ -105,6 +105,14 @@ export class GitService {
     return this.commitManager.commit(repoPath, message);
   }
 
+  async getRemotes(repoPath: string) {
+    return this.repoManager.getRemotes(repoPath);
+  }
+
+  async setRemote(repoPath: string, name = 'origin', url: string) {
+    return this.repoManager.setRemote(repoPath, name, url);
+  }
+
   async push(
     repoPath: string,
     options: {
@@ -112,6 +120,7 @@ export class GitService {
       branch?: string;
       setUpstream?: boolean;
       force?: boolean;
+      dryRun?: boolean;
     } = {}
   ) {
     return this.commitManager.push(repoPath, options);

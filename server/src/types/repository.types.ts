@@ -29,3 +29,14 @@ export interface GitStatusSummary {
   untracked: string[];
   conflicted: string[];
 }
+
+export interface GitRemoteInfo {
+  name: string;
+  fetchUrl: string;
+  pushUrl: string;
+  url: string;
+  isGitHub: boolean;
+  githubOwner?: string;
+  githubRepo?: string;
+}
+

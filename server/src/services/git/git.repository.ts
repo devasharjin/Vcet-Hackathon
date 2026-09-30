@@ -3,8 +3,20 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { runGitCommand } from '../../utils/command.js';
 import { normalizeRepoPath, isPathAccessible } from '../../utils/file.js';
-import { RepositoryInfo, GitStatusSummary } from '../../types/repository.types.js';
+import { RepositoryInfo, GitStatusSummary, GitRemoteInfo } from '../../types/repository.types.js';
 import { logger } from '../../utils/logger.js';
+
+export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+  if (!url) return null;
+  const match = url.trim().match(/github\.com[:/]([^/]+)\/([^/.]+)(?:\.git)?/i);
+  if (match) {
+    return {
+      owner: match[1],
+      repo: match[2].replace(/\.git$/, ''),
+    };
+  }
+  return null;
+}
 
 export class GitRepositoryManager {
   /**
@@ -60,6 +72,80 @@ export class GitRepositoryManager {
       // Ignore if no remote
     }
     return path.basename(normalized);
+  }
+
+  /**
+   * Get configured Git remotes
+   */
+  async getRemotes(repoPath: string): Promise<GitRemoteInfo[]> {
+    const normalized = normalizeRepoPath(repoPath);
+    try {
+      const { stdout } = await runGitCommand(['remote', '-v'], {
+        cwd: normalized,
+      });
+
+      if (!stdout) return [];
+
+      const remotesMap = new Map<string, { name: string; fetchUrl: string; pushUrl: string }>();
+      const lines = stdout.split('\n');
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const parts = trimmed.split(/\s+/);
+        if (parts.length >= 2) {
+          const name = parts[0];
+          const url = parts[1];
+          const type = parts[2] || '';
+          const existing = remotesMap.get(name) || { name, fetchUrl: '', pushUrl: '' };
+          if (type.includes('push')) {
+            existing.pushUrl = url;
+          } else {
+            existing.fetchUrl = url;
+          }
+          remotesMap.set(name, existing);
+        }
+      }
+
+      return Array.from(remotesMap.values()).map((r) => {
+        const url = r.pushUrl || r.fetchUrl;
+        const gh = parseGitHubUrl(url);
+        return {
+          name: r.name,
+          fetchUrl: r.fetchUrl,
+          pushUrl: r.pushUrl,
+          url,
+          isGitHub: !!gh,
+          githubOwner: gh?.owner,
+          githubRepo: gh?.repo,
+        };
+      });
+    } catch (err: any) {
+      logger.warn(`Failed to get remotes for ${normalized}: ${err.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Add or update a Git remote (e.g. origin)
+   */
+  async setRemote(repoPath: string, name = 'origin', url: string): Promise<void> {
+    const normalized = normalizeRepoPath(repoPath);
+    logger.info(`Setting remote ${name} to ${url} in ${normalized}`);
+
+    try {
+      const { stdout } = await runGitCommand(['remote'], { cwd: normalized });
+      const existing = stdout.split('\n').map((s) => s.trim()).filter(Boolean);
+
+      if (existing.includes(name)) {
+        await runGitCommand(['remote', 'set-url', name, url], { cwd: normalized });
+      } else {
+        await runGitCommand(['remote', 'add', name, url], { cwd: normalized });
+      }
+    } catch (err: any) {
+      logger.error(`Failed to set remote ${name} in ${normalized}:`, err);
+      throw err;
+    }
   }
 
   /**

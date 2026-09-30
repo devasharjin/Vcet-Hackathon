@@ -10,6 +10,7 @@ import {
   ArrowRight,
   ShieldCheck,
   RotateCcw,
+  UploadCloud,
 } from 'lucide-react';
 import { conflictApi } from '../services/conflictApi.js';
 import { Button } from '../components/common/Button.js';
@@ -31,13 +32,24 @@ export const HistoryPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleOpenSession = (sessionId: string) => {
+  const handleOpenSession = (sessionId: string, status?: string) => {
     setActiveSessionId(sessionId);
-    navigate('/conflicts');
+    if (status === 'COMMITTED' || status === 'PUSHED') {
+      navigate('/verification');
+    } else {
+      navigate('/conflicts');
+    }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'PUSHED':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-[#388bfd]/15 text-[#58a6ff] border border-[#388bfd]/40">
+            <UploadCloud className="w-3.5 h-3.5" />
+            PUSHED TO GITHUB
+          </span>
+        );
       case 'COMMITTED':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-[#238636]/15 text-[#3fb950] border border-[#238636]/40">
@@ -117,7 +129,7 @@ export const HistoryPage: React.FC = () => {
                 <tr
                   key={item._id}
                   className="hover:bg-[#1c2128] transition-colors group cursor-pointer"
-                  onClick={() => handleOpenSession(item._id)}
+                  onClick={() => handleOpenSession(item._id, item.status)}
                 >
                   <td className="py-4 px-4 font-medium text-[#c9d1d9]">
                     <div className="flex items-center gap-2">
@@ -166,7 +178,7 @@ export const HistoryPage: React.FC = () => {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenSession(item._id);
+                        handleOpenSession(item._id, item.status);
                       }}
                       icon={<ArrowRight className="w-3.5 h-3.5" />}
                     >

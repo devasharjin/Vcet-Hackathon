@@ -141,26 +141,91 @@ export class ApplyResolutionService {
 
   async pushSession(
     sessionId: string,
-    options?: { remote?: string; branch?: string; force?: boolean }
+    options?: {
+      remote?: string;
+      branch?: string;
+      setUpstream?: boolean;
+      force?: boolean;
+      dryRun?: boolean;
+      remoteUrl?: string;
+    }
   ) {
     const session = await DataStore.getSession(sessionId);
     if (!session) throw new Error(`Session ${sessionId} not found`);
 
     const repoPath = session.repositoryPath;
+    const remoteName = options?.remote || 'origin';
+
+    // If a remoteUrl was supplied (e.g. setting up GitHub remote URL), configure it first
+    if (options?.remoteUrl && options.remoteUrl.trim()) {
+      await gitService.setRemote(repoPath, remoteName, options.remoteUrl.trim());
+    }
+
+    const branchName = options?.branch || session.targetBranch;
+
+    logger.info(`Pushing session ${sessionId} to ${remoteName}/${branchName}...`);
+
     const output = await gitService.push(repoPath, {
-      remote: options?.remote,
-      branch: options?.branch || session.targetBranch,
+      remote: remoteName,
+      branch: branchName,
+      setUpstream: options?.setUpstream !== false,
       force: options?.force,
+      dryRun: options?.dryRun,
     });
 
-    await DataStore.logOperation(
-      sessionId,
-      'PUSH_CHANGES',
-      'SUCCESS',
-      `Pushed resolved changes to remote: ${output}`
-    );
+    if (!options?.dryRun) {
+      // Mark session as PUSHED and persist push metadata
+      await DataStore.updateSession(sessionId, {
+        status: 'PUSHED',
+        pushedRemote: remoteName,
+        pushedBranch: branchName,
+        pushedAt: new Date(),
+      });
 
-    return { success: true, output };
+      await DataStore.logOperation(
+        sessionId,
+        'PUSH_CHANGES',
+        'SUCCESS',
+        `Successfully pushed commit ${session.commitHash || ''} to ${remoteName}/${branchName}: ${output}`,
+        {
+          remote: remoteName,
+          branch: branchName,
+          output,
+          commitHash: session.commitHash,
+        }
+      );
+    }
+
+    // Retrieve remote details to construct GitHub direct links
+    const remotes = await gitService.getRemotes(repoPath);
+    const activeRemote = remotes.find((r) => r.name === remoteName) || remotes[0];
+
+    let githubRepoUrl: string | undefined;
+    let githubCommitUrl: string | undefined;
+    let githubCompareUrl: string | undefined;
+
+    if (activeRemote?.isGitHub && activeRemote.githubOwner && activeRemote.githubRepo) {
+      githubRepoUrl = `https://github.com/${activeRemote.githubOwner}/${activeRemote.githubRepo}`;
+      if (session.commitHash) {
+        githubCommitUrl = `${githubRepoUrl}/commit/${session.commitHash}`;
+      }
+      if (session.sourceBranch && session.targetBranch) {
+        githubCompareUrl = `${githubRepoUrl}/compare/${session.targetBranch}...${session.sourceBranch}`;
+      }
+    }
+
+    return {
+      success: true,
+      output,
+      remote: remoteName,
+      branch: branchName,
+      commitHash: session.commitHash,
+      remoteUrl: activeRemote?.pushUrl || activeRemote?.fetchUrl || activeRemote?.url,
+      githubRepoUrl,
+      githubCommitUrl,
+      githubCompareUrl,
+      isGitHub: !!activeRemote?.isGitHub,
+    };
   }
 }
 

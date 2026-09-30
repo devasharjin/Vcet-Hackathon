@@ -9,6 +9,7 @@ export type SessionStatus =
   | 'VERIFIED'
   | 'VERIFICATION_FAILED'
   | 'COMMITTED'
+  | 'PUSHED'
   | 'ROLLED_BACK';
 
 export interface AnalysisSession {
@@ -22,6 +23,9 @@ export interface AnalysisSession {
   conflictCount: number;
   resolvedCount: number;
   commitHash?: string;
+  pushedRemote?: string;
+  pushedBranch?: string;
+  pushedAt?: string;
   createdAt: string;
   completedAt?: string;
 }

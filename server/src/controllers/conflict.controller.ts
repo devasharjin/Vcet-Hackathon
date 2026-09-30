@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { resolutionService } from '../services/resolution/resolution.service.js';
+import { gitService } from '../services/git/git.service.js';
 import { DataStore } from '../models/store.js';
 import { AppError } from '../middleware/error.middleware.js';
 import { normalizeRepoPath } from '../utils/file.js';
@@ -171,23 +172,86 @@ export class ConflictController {
     }
   }
 
+  async getSessionRemotes(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { sessionId } = req.params;
+      const session = await resolutionService.getSession(sessionId);
+      if (!session) {
+        throw new AppError(`Session ${sessionId} not found`, 404);
+      }
+
+      const remotes = await gitService.getRemotes(session.repositoryPath);
+      res.status(200).json({
+        success: true,
+        data: remotes,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async setSessionRemote(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { sessionId } = req.params;
+      const { name, url } = req.body || {};
+      if (!url || typeof url !== 'string') {
+        throw new AppError('Remote URL is required', 400);
+      }
+
+      const session = await resolutionService.getSession(sessionId);
+      if (!session) {
+        throw new AppError(`Session ${sessionId} not found`, 404);
+      }
+
+      await gitService.setRemote(session.repositoryPath, name || 'origin', url.trim());
+      const remotes = await gitService.getRemotes(session.repositoryPath);
+
+      res.status(200).json({
+        success: true,
+        data: remotes,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async pushCommit(req: Request, res: Response, next: NextFunction) {
     try {
       const { sessionId } = req.params;
-      const { remote, branch, force } = req.body || {};
+      const { remote, branch, force, setUpstream, dryRun, remoteUrl } = req.body || {};
 
       const result = await resolutionService.pushSession(sessionId, {
         remote,
         branch,
         force,
+        setUpstream,
+        dryRun,
+        remoteUrl,
       });
 
       res.status(200).json({
         success: true,
         data: result,
       });
-    } catch (err) {
-      next(err);
+    } catch (err: any) {
+      const message = err.message || '';
+      let friendlyMessage = message;
+
+      if (message.includes('does not appear to be a git repository') || message.includes('No such remote')) {
+        friendlyMessage = 'The specified remote repository is not configured. Please enter a valid GitHub repository URL.';
+      } else if (
+        message.includes('Authentication failed') ||
+        message.includes('could not read Username') ||
+        (message.includes('Permission to') && message.includes('denied'))
+      ) {
+        friendlyMessage = 'GitHub authentication required. Please ensure Git credentials or Personal Access Token (PAT) / SSH keys are configured for GitHub on your machine.';
+      } else if (message.includes('Updates were rejected') || message.includes('non-fast-forward')) {
+        friendlyMessage = 'Push rejected: the remote branch contains new commits. Enable "Force Push (--force-with-lease)" or pull remote changes before pushing.';
+      }
+
+      const enhancedError = new AppError(friendlyMessage, 400, 'GIT_PUSH_FAILED');
+      (enhancedError as any).rawDetails = message;
+      next(enhancedError);
     }
   }
 

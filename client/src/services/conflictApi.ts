@@ -1,7 +1,7 @@
 import { apiClient } from './api.js';
 import { ConflictItem } from '../types/conflict.js';
 import { AnalysisSession, OperationLogItem } from '../types/resolution.js';
-import { ApplyResolutionResult, PushResult } from '../types/verification.js';
+import { ApplyResolutionResult, PushResult, GitRemoteInfo } from '../types/verification.js';
 
 export interface AnalyzeMergeResponse {
   sessionId: string;
@@ -74,9 +74,26 @@ export const conflictApi = {
     return res.data;
   },
 
+  async getSessionRemotes(sessionId: string): Promise<GitRemoteInfo[]> {
+    const res: any = await apiClient.get(`/merge/${sessionId}/remotes`);
+    return res.data;
+  },
+
+  async setSessionRemote(sessionId: string, name: string, url: string): Promise<GitRemoteInfo[]> {
+    const res: any = await apiClient.post(`/merge/${sessionId}/remotes`, { name, url });
+    return res.data;
+  },
+
   async pushSession(
     sessionId: string,
-    options?: { remote?: string; branch?: string; force?: boolean }
+    options?: {
+      remote?: string;
+      branch?: string;
+      setUpstream?: boolean;
+      force?: boolean;
+      dryRun?: boolean;
+      remoteUrl?: string;
+    }
   ): Promise<PushResult> {
     const res: any = await apiClient.post(`/merge/${sessionId}/push`, options || {});
     return res.data;

@@ -12,6 +12,9 @@ export interface IAnalysisSession {
   conflictCount: number;
   resolvedCount: number;
   commitHash?: string;
+  pushedRemote?: string;
+  pushedBranch?: string;
+  pushedAt?: Date;
   createdAt?: Date;
   completedAt?: Date;
 }
@@ -37,6 +40,7 @@ const AnalysisSessionSchema = new Schema<IAnalysisSession>(
         'VERIFIED',
         'VERIFICATION_FAILED',
         'COMMITTED',
+        'PUSHED',
         'ROLLED_BACK',
       ],
       default: 'INITIALIZED',
@@ -44,6 +48,9 @@ const AnalysisSessionSchema = new Schema<IAnalysisSession>(
     conflictCount: { type: Number, default: 0 },
     resolvedCount: { type: Number, default: 0 },
     commitHash: { type: String },
+    pushedRemote: { type: String },
+    pushedBranch: { type: String },
+    pushedAt: { type: Date },
     completedAt: { type: Date },
   },
   { timestamps: true }

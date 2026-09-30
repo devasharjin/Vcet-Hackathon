@@ -71,14 +71,16 @@ export class GitCommitManager {
       branch?: string;
       setUpstream?: boolean;
       force?: boolean;
+      dryRun?: boolean;
     } = {}
   ): Promise<string> {
     const normalized = normalizeRepoPath(repoPath);
     const remote = options.remote || 'origin';
     const args = ['push'];
 
-    if (options.setUpstream) args.push('-u');
+    if (options.setUpstream !== false) args.push('-u');
     if (options.force) args.push('--force-with-lease');
+    if (options.dryRun) args.push('--dry-run');
     args.push(remote);
     if (options.branch) args.push(options.branch);
 

@@ -192,7 +192,14 @@ export class ResolutionService {
 
   async pushSession(
     sessionId: string,
-    options?: { remote?: string; branch?: string; force?: boolean }
+    options?: {
+      remote?: string;
+      branch?: string;
+      setUpstream?: boolean;
+      force?: boolean;
+      dryRun?: boolean;
+      remoteUrl?: string;
+    }
   ) {
     return applyResolutionService.pushSession(sessionId, options);
   }

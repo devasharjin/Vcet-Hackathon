@@ -13,6 +13,7 @@ export type SessionStatus =
   | 'VERIFIED'
   | 'VERIFICATION_FAILED'
   | 'COMMITTED'
+  | 'PUSHED'
   | 'ROLLED_BACK';
 
 export interface VerificationCheck {

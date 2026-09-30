@@ -19,7 +19,8 @@ Even worse, developers rushing through conflict resolution often pick one side b
 3. **Human-in-the-Loop Approval**: Puts the developer in full control with a dark IDE-inspired 3-pane Monaco Diff & Code Editor to inspect, test, or modify proposed resolutions before anything touches the working tree.
 4. **Automated Verification Engine**: Executes a 5-point verification pipeline (zero conflict markers, syntax balance, project builds, automated tests, Git working tree integrity).
 5. **Safe Automated Git Commit**: Staged via `git add` and committed with the exact message `"resolved merge conflict"` only after verification passes.
-6. **One-Click Instant Rollback**: Takes snapshots before modifications and can restore the repository to its pre-application state immediately if verification fails or the user cancels.
+6. **Push to Remote (GitHub)**: One-click push to GitHub or remote repositories (`git push -u origin <branch>`), with remote auto-detection, inline GitHub URL configuration, and direct clickable links to the live commit and repository on GitHub.
+7. **One-Click Instant Rollback**: Takes snapshots before modifications and can restore the repository to its pre-application state immediately if verification fails or the user cancels.
 
 ---
 
@@ -64,6 +65,10 @@ Even worse, developers rushing through conflict resolution often pick one side b
                            │
                            ▼
                  "resolved merge conflict"
+                           │
+                           ▼
+                 Push to GitHub Remote
+             (Complete End-to-End Workflow)
 ```
 
 ---
@@ -199,6 +204,13 @@ Before committing, MergeMind executes:
   ```
 - If verification fails: commit is blocked and the user can click **[Rollback Changes]** to restore pre-application state instantly.
 
+### 8. Push to GitHub & Complete Workflow
+- **Remote Auto-Discovery**: Automatically inspects configured remotes (`origin`) and repository details. If no remote exists, provides an inline GitHub URL setup form.
+- **Push Pipeline Execution**: Executes `git push -u origin <branch>` to push your verified merge commit to GitHub.
+- **Advanced Push Controls**: Configurable upstream tracking (`-u`), simulation mode (`--dry-run`), and force push protection (`--force-with-lease`).
+- **Direct GitHub Navigation**: Instant 1-click links to view the live commit on GitHub, open the repository, and compare branches to create pull requests.
+- **Workflow Audit**: Permanently logs the push event and remote destination in Merge History with the `PUSHED TO GITHUB` badge.
+
 ---
 
 ## 1-Click Hackathon Demo Scenario
@@ -210,7 +222,7 @@ To experience a realistic, verified end-to-end demo in under 60 seconds:
    - `feature/payment`: contains `processPayment()` with audit receipt confirmation.
 3. Click **"Analyze Merge"**.
 4. Watch MergeMind simulate the merge, extract the conflict, and invoke Gemini to produce a unified function preserving **both retry handling AND audit receipts**!
-5. Inspect the Monaco diff, click **[Accept Resolution]**, run **Verification**, and watch it automatically stage and commit `"resolved merge conflict"`.
+5. Inspect the Monaco diff, click **[Accept Resolution]**, run **Verification**, watch it stage and commit `"resolved merge conflict"`, and click **[Push to GitHub]** to complete the full Git workflow!
 
 ---
 
